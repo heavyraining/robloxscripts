@@ -1,23 +1,65 @@
-local FullBrightEnabled = true --enables full bright, set to false to turn off
-local DeleteTroopSight = true --deletes the parts showing what troops see because it's useless since you can already see everything
+local FullBrightEnabled = true -- enables full bright, set to false to turn off
+local DeleteTroopSight = false -- deletes the parts showing what troops see because it's useless since you can already see everything
+local ESPRefreshCooldown = 5   -- how fast the esp refreshes troops (only matters if refreshmethod is 1)
+local RefreshMethod = 2
+-- REFRESHMETHOD 1 = loops refresh indiscriminately
+-- REFRESHMETHOD 2 = everytime a child is added to the hidden units folder, the esp is refreshed
+
+
+local debug = true -- enables prints
+
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+if debug then
+	print("stage 1, setup")
+end
 
---gets the children of the hidden units folder then moves them to the entity models folder where they'll actually exist and you can see them
-wait(1) --waits just incase your dumbass executes too early and game breaks
-for _, child in ipairs(game.ReplicatedStorage.HIDDEN_UNITS:GetChildren()) do
-    if child:IsA("Model")then
-        spawn(function()
-            child.Parent = game.Workspace.EntityModels
-        end)
-    end
+-- moves the children of the hidden units folder to the entity models folder where they'll actually exist and be visible
+local function refreshTroops()
+	wait(0.2) -- to prevent some troops not getting marked as visible
+	for _, child in ipairs(game.ReplicatedStorage.HIDDEN_UNITS:GetChildren()) do
+		if child:IsA("Model") then
+			child.Parent = game.Workspace.EntityModels
+		end
+	end
+	print("esp refresh done")
+end
+
+if debug then
+	print("function established")
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-if FullBrightEnabled == true then loadstring(game:HttpGet("https://pastebin.com/raw/06iG6YkU", true))() --fullbright script not made by me, made by The Letter B on v3rmillion lol
+
+if FullBrightEnabled then 
+	loadstring(game:HttpGet("https://pastebin.com/raw/06iG6YkU", true))() -- fullbright script not made by me, made by The Letter B on v3rmillion lol
 end
-if DeleteTroopSight == true then game.Workspace.Filter.OutlineParts:Destroy()
-    end
---now we're gonna destroy the hidden units folder just so units that spawn in in the future won't become hidden or already existing units don't go hidden when moving
-wait(0.2) --waits just to prevent it being destroyed to quickly
-game.ReplicatedStorage.HIDDEN_UNITS:Destroy()
+
+if DeleteTroopSight then 
+	game.Workspace.Filter.OutlineParts:Destroy()
+end
+
+if debug then
+	print("misc options established")
+end
+
+refreshTroops() -- this is so it instantly shows them upon executing
+if debug then
+	print("first tick refresh finished")
+end
+
+if RefreshMethod == 1 then
+	while true do
+		wait(ESPRefreshCooldown)
+		refreshTroops()
+	end
+end
+
+if debug then
+	print("stage 2, methods")
+end
+
+if RefreshMethod == 2 then
+	game.ReplicatedStorage.HIDDEN_UNITS.ChildAdded:Connect(refreshTroops)
+end
